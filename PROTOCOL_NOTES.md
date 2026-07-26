@@ -148,7 +148,7 @@ capabilities without verifying against these files first.
 `FormatSupported` lists exactly **two** items:
 ```xml
 <item>jfif</item>
-<hpraw</item>
+<item>hpraw</item>
 ```
 No PDF at the protocol level.  Any PDF output must be produced by
 client-side conversion after retrieving `jfif` or `hpraw`.
@@ -253,8 +253,6 @@ significance and should be disregarded for implementation purposes.
 - **Other resolutions:** No captures at 150/200/600 dpi yet. The XML
   `<Resolution>` element likely takes arbitrary integer values, but
   printer-reported limits are not yet captured.
-- **PDF vs JPEG output:** All captures used `jfif`. The `<Format>` element
-  may also accept `pdf` or `raw` — not yet tested.
 - **Calibration flow:** What `GetCalibrationCaps` returns and what
   `Calibrate` does in practice.
 - **ADF multi-page flow:** How the printer signals page boundaries and

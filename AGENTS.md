@@ -44,7 +44,7 @@ paper-size handling without relying on a PC.
 - [ ] Capture + analyze a print job (endpoint 0x01) to confirm the exact PCL flavor/headers the driver emits.
 - [ ] Capture an ADF scan and diff against flatbed to find the feeder-specific commands.
 - [ ] Capture a manual-duplex print job.
-- [ ] Only after the above: start the actual Android implementation (USB Host API, PCL raster generation, SCL command replication).
+- [ ] Only after the above: start the actual Android implementation (USB Host API, PCL raster generation, SOAP/XML command replication).
 
 ## How captures get here
 
