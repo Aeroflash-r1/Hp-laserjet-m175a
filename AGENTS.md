@@ -40,8 +40,8 @@ paper-size handling without relying on a PC.
 - [x] USB descriptor tree captured (VID/PID, interfaces, endpoints) — done via USBTreeView on Windows.
 - [x] Confirmed PCL6/PCL5/PS support via HP docs.
 - [x] One flatbed scan captured at 300dpi grayscale (USBPcap, on Windows) — `.pcapng` file to be dropped in `captures/`.
-- [ ] Extract and label the SCL command sequence from that capture (endpoint 0x03 OUT = commands, 0x83/0x04 IN = responses).
-- [ ] Repeat captures at other resolutions/color modes to find which bytes vary (diff them).
+- [x] Extract and label the SCL command sequence from that capture (endpoint 0x03 OUT = commands, 0x83/0x04 IN = responses).
+- [x] Repeat captures at other resolutions/color modes to find which bytes vary (diff them).
 - [ ] Capture + analyze a print job (endpoint 0x01) to confirm the exact PCL flavor/headers the driver emits.
 - [ ] Capture an ADF scan and diff against flatbed to find the feeder-specific commands.
 - [ ] Capture a manual-duplex print job.
