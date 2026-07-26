@@ -55,17 +55,18 @@ All scan-related elements live under `http://schemas.hp.com/imaging/escl/2011/05
 
 The 4 captures (`scan_flatbed_300dpi_{greyscale,colour}.pcapng`,
 `scan_adf_300dpi_{greyscale,colour}.pcapng`) all follow the same
-command sequence on EP 0x03:
+command sequence on EP 0x03.  Each HTTP request spans 3 USB transactions:
+(1) HTTP headers, (2) hex chunk size, (3) XML body.
 
-| # | Operation | SOAP action (in `action` header) |
-|---|-----------|----------------------------------|
-| 1 | GetScannerElements | Query device capabilities |
-| 2 | SetScannerConfig | Set scan parameters |
-| 3 | CreateScanJob | Submit the actual scan job |
-| 4 | CreateScanJob | (duplicate/confirmation) |
-| 5 | GetScanCaps | Retrieve scan capabilities |
-| 6 | Calibrate | Request calibration |
-| 7 | GetCalibrationCaps | Query calibration options |
+| # | Operation | Purpose |
+|---|-----------|---------|
+| 1–3 | `GetScannerElements` ×3 | Query device capabilities (repeated, likely for different element categories) |
+| 4 | `CreateScanJobRequest` | Submit the scan job with all parameters |
+| 5 | `RetrieveImageRequest` | Retrieve the scanned image by JobId |
+| 6 | `GetJobInfo` | Query job status/completion (ADF + colour captures) |
+| 7 | `GetPreviousImagePadInfo` | Query image padding info (colour captures only) |
+| 8 | `GetScannerElements` | Post-scan capability re-query (ADF colour only) |
+| 9 | `RetrieveImageRequest` | Second page retrieval (ADF colour only, multi-page) |
 
 Responses on EP 0x83 follow the same order, interleaved with status
 updates via the interrupt endpoint (EP 0x04).
@@ -130,20 +131,65 @@ All 4 captures used 300 dpi.  Other resolutions not yet captured.
 
 ---
 
-## Known SCL bytes (in responses, EP 0x83)
+## Full SOAP envelope template
+
+Every outbound request uses this envelope (body varies per operation):
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope
+  xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+  xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:wscn="http://tempuri.org/wscn.xsd">
+  <SOAP-ENV:Body>
+    <wscn:OPERATION_NAME>
+      ...
+    </wscn:OPERATION_NAME>
+  </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+```
+
+The response namespace is `schemas.hp.com/imaging/escl/2011/05/03` (HP's
+proprietary eSCL predecessor).
+
+---
+
+## Reference files
+
+The `reference/` directory contains byte-for-byte captured payloads from
+the 4 `.pcapng` files, usable as literal templates:
+
+| File | Operation |
+|------|-----------|
+| `{capture}_get_scanner_elements.xml` | `GetScannerElements` request body |
+| `{capture}_create_scan_job.xml` | `CreateScanJobRequest` body (the key parameter file) |
+| `{capture}_retrieve_image.xml` | `RetrieveImageRequest` body |
+| `{capture}_get_job_info.xml` | `GetJobInfo` body |
+| `{capture}_get_previous_image_pad_info.xml` | `GetPreviousImagePadInfo` body |
+| `{capture}_response_initial.xml` | First `HTTP/1.1 202 ACCEPTED` response (headers + XML) |
+
+Captures: `flatbed_greyscale`, `flatbed_colour`, `adf_greyscale`, `adf_colour`.
+
+---
+
+## Known SCL bytes (in responses, EP 0x83) — likely false positives
 
 The ESC-byte sequences documented in `captures/README.md` appear in the
-**response** data on EP 0x83, NOT in the command channel on EP 0x03.
-These are likely part of the JPEG/JFIF image stream framing or a
-secondary control channel within the response, but they are not the
-primary way scan jobs are submitted.
+**response** data on EP 0x83.  Critically, these bytes occur **inside
+the JPEG/JFIF image payload** (after the chunked HTTP response body
+starts), not in HTTP headers or XML response metadata.
 
-```
-ESC * s 1 M — Set color mode (3=greyscale, 4=colour)
-ESC & a <h>V — Set vertical position (paper size related)
-ESC E — Page eject / form feed
-ESC O — Unknown
-```
+JPEG compressed data is high-entropy binary with no structured escaping
+— short byte sequences like `ESC * s 1 M` or `ESC E` will appear
+randomly in any sufficiently large compressed image.  **This is very
+likely a false positive from naive substring matching against the
+captured binary stream, not evidence of a secondary SCL sub-protocol.**
+
+No action needed: the real command protocol is the SOAP/XML layer on
+EP 0x03 described above.  These byte matches have no operational
+significance and should be disregarded for implementation purposes.
 
 ---
 

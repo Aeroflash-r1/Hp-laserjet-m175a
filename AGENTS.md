@@ -28,12 +28,12 @@ paper-size handling without relying on a PC.
   de-risks the print side: interface 1 uses the documented USB-IF Printer
   Class transport, and the data format is standard PCL, not something
   fully proprietary.
-- The scan interface (0) is vendor-specific and almost certainly uses
-  **HP SCL (Scanner Control Language)**. This is not publicly spec'd by
-  HP, but it IS implemented in HP's own open-source **HPLIP** project
-  (see `hpmud` and `hpaio.c` in HPLIP source) — treat that source as the
-  primary reference when interpreting captured scan command bytes, rather
-  than guessing from scratch.
+- The scan interface (0) is vendor-specific but does **not** use raw SCL
+  escape sequences. It speaks **HTTP/1.1 (chunked transfer encoding)**
+  carrying **gSOAP 2.7 SOAP/XML** over bulk USB endpoints, using an
+  HP-proprietary eSCL predecessor namespace
+  (`schemas.hp.com/imaging/escl/2011/05/03`). See `PROTOCOL_NOTES.md`
+  for the full protocol spec.
 
 ## Current progress
 
@@ -62,9 +62,9 @@ readable reports in `reports/`. Prefer filtering by endpoint
 data is large and not useful for protocol reverse-engineering; the small
 command-channel payloads are what matter.
 
-When labeling bytes, be honest about confidence: HP SCL has documented
-opcodes (via HPLIP source) but this specific printer may use vendor
-extensions. Flag "likely" vs "confirmed" rather than asserting certainty.
+When labeling bytes, be honest about confidence: this printer uses
+gSOAP/SOAP-XML, not raw SCL. Flag "likely" vs "confirmed" rather than
+asserting certainty.
 
 Don't try to reconstruct or output actual scanned image content in
 reports — only the protocol framing/commands matter here.
@@ -75,7 +75,7 @@ reports — only the protocol framing/commands matter here.
   issue a `GET_DEVICE_ID` control request to confirm supported command
   set at runtime, then send PJL header + PCL (raster mode is simpler to
   implement than full PCL6 XL object encoding) over the bulk OUT endpoint.
-- Scanning: claim interface 0, replicate the captured SCL command
+- Scanning: claim interface 0, replicate the captured SOAP/XML command
   sequence over bulk EP3, poll/read status via EP3 IN and interrupt EP4,
   then stream the raster data back and decode it into a bitmap/PDF.
 - Manual duplex: no special protocol needed — it's a UI/workflow problem
