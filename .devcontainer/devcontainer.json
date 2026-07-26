@@ -1,0 +1,24 @@
+{
+  "name": "HP M175a Protocol Reverse Engineering",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-vscode.hexeditor",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python3"
+      }
+    }
+  },
+  "postCreateCommand": "pip install --no-cache-dir -r requirements.txt && tshark --version",
+  "remoteUser": "vscode",
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "4gb"
+  }
+}
