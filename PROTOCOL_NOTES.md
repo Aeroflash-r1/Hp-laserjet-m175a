@@ -46,8 +46,14 @@ Chunk sizes are hex-encoded (e.g. `4e7\n` = 1255 bytes), terminated by `0`.
 
 ## SOAP namespace
 
-All scan-related elements live under `http://schemas.hp.com/imaging/escl/2011/05/03`
-(`wscn:` prefix).  The scanner responds with the same namespace in responses.
+All scan-related elements live under `http://tempuri.org/wscn.xsd`
+(`wscn:` prefix).  This is consistent across every request and response
+in all 21 reference files.  The response body root element is
+`<wscn:ScanElements>`.
+
+**Do not assert protocol identifiers from general knowledge of
+similar-sounding standards.**  Any future namespace or identifier claim
+must be verified by grep against the actual `reference/*.xml` files first.
 
 ---
 
@@ -131,6 +137,55 @@ All 4 captures used 300 dpi.  Other resolutions not yet captured.
 
 ---
 
+## Verified hardware capabilities (from `*_response_initial.xml`)
+
+All facts below are extracted directly from the `<wscn:ScanElements>`
+response in `reference/*_response_initial.xml`.  Do not assert additional
+capabilities without verifying against these files first.
+
+### Output formats
+
+`FormatSupported` lists exactly **two** items:
+```xml
+<item>jfif</item>
+<hpraw</item>
+```
+No PDF at the protocol level.  Any PDF output must be produced by
+client-side conversion after retrieving `jfif` or `hpraw`.
+
+### Color modes
+
+`ColorSupported` lists **four** items:
+```xml
+<item>BlackandWhite1</item>
+<item>GrayScale8</item>
+<item>RGB24</item>
+<item>18122912</item>
+```
+`18122912` is unexplained — it does not correspond to any standard color
+mode name.  It has not been tested and should be treated as unreliable
+until captured.
+
+### Optical resolution limits
+
+| Source | Resolution |
+|--------|-----------|
+| PlatenOpticalResolution | **1200 × 1200** |
+| ADFOpticalResolution | **300 × 300** |
+
+This is a real hardware ceiling — the ADF sensor is physically
+lower-resolution than the flatbed CCD.
+
+### Paper-in-ADF detection
+
+`ScannerStatus > ScanToStatus > PaperInADF` is a live boolean:
+- `false` in flatbed captures (`flatbed_*_response_initial.xml`)
+- `true` in ADF captures (`adf_*_response_initial.xml`)
+
+Usable for auto-detecting loaded paper before choosing a scan source.
+
+---
+
 ## Full SOAP envelope template
 
 Every outbound request uses this envelope (body varies per operation):
@@ -151,8 +206,8 @@ Every outbound request uses this envelope (body varies per operation):
 </SOAP-ENV:Envelope>
 ```
 
-The response namespace is `schemas.hp.com/imaging/escl/2011/05/03` (HP's
-proprietary eSCL predecessor).
+The response body root element is `<wscn:ScanElements>`, namespace
+`http://tempuri.org/wscn.xsd`.
 
 ---
 

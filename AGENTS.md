@@ -30,9 +30,8 @@ paper-size handling without relying on a PC.
   fully proprietary.
 - The scan interface (0) is vendor-specific but does **not** use raw SCL
   escape sequences. It speaks **HTTP/1.1 (chunked transfer encoding)**
-  carrying **gSOAP 2.7 SOAP/XML** over bulk USB endpoints, using an
-  HP-proprietary eSCL predecessor namespace
-  (`schemas.hp.com/imaging/escl/2011/05/03`). See `PROTOCOL_NOTES.md`
+  carrying **gSOAP 2.7 SOAP/XML** over bulk USB endpoints, using the
+  namespace `http://tempuri.org/wscn.xsd`. See `PROTOCOL_NOTES.md`
   for the full protocol spec.
 
 ## Current progress
