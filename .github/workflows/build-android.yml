@@ -22,18 +22,10 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-        working-directory: android_app
-
-      - name: Generate Gradle wrapper
-        run: gradle wrapper
-        working-directory: android_app
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug
+        run: gradle assembleDebug
         working-directory: android_app
 
       - name: Upload debug APK
